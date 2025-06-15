@@ -6,9 +6,9 @@ import (
 )
 
 func main() {
-	swaggerUIPath := "./dist"
-
-	http.Handle("/", http.FileServer(http.Dir(swaggerUIPath)))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "dist/task_traker.yaml")
+	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
