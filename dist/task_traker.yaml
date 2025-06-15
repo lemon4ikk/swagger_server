@@ -1,0 +1,239 @@
+openapi: 3.0.3
+
+info:
+  title: "Спецификация для планировщика задач"
+  version: "1.0"
+  description: API для управления задачами (трекер задач)
+
+servers:
+  - url: http://localhost:8080/api
+
+paths:
+  /user:
+    post:
+      summary: "Метод регистрации пользователя"
+      requestBody: 
+        required: true
+        content: 
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: "Успешная авторизация. JWT access token передан в заголовке ответа"
+          headers:
+            Authorization:
+              $ref: '#/components/headers/Authorization'
+          content:
+            application/json: 
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: "Некорректный запрос"
+        '401':
+          description: "Пользователь неавторизован"
+        '500':
+          description: "Ошибка сервера"
+        default:
+          description: "Ошибка"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomError'
+      
+    get:
+      summary: "Получение текущего пользователя"
+      responses:
+        '200':
+          description: "Текущий пользователь"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: "Пользователь неавторизован"
+            
+  /auth/login:
+    post:
+      summary: "Метод авторизации пользователя"
+      requestBody: 
+        required: true
+        content: 
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: "Пользователь авторизован"
+          content:
+            application/json: 
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: "Некорректный запрос"
+        '401':
+          description: "Пользователь неавторизован"
+        '500':
+          description: "Ошибка сервера"
+        default:
+          description: "Ошибка"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomError'
+  
+  /tasks:
+    get:
+      summary: "Получение списка задач текущего пользователя"
+      responses:
+        '200':
+          description: "Список задач"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+        '401':
+          description: "Ошибка"
+
+    post:
+      summary: "Создание задачи"
+      requestBody: 
+        required: true
+        content: 
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '201':
+          description: "Задача создана"
+          content:
+            application/json: 
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: "Некорректный запрос"
+        '500':
+          description: "Ошибка сервера"
+        default:
+          description: "Ошибка"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomError'
+
+    patch:
+      summary: "Редактирование задачи"
+      requestBody:
+        required: true
+        description: "Обновляемые поля задачи. Не обязательно изменять все поля для задачи"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '200':
+          description: "Измененная задача"
+          content:
+            application/json: 
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: "Некорректный запрос"
+        '500':
+          description: "Ошибка сервера"
+        default:
+          description: "Ошибка"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomError'
+
+  /tasks/{id}:
+    delete:
+      summary: "Удаление задачи"
+      description: "Удаляет задачу по её идентификатору"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: "Задача успешно удалена"
+        '400':
+          description: "Некорректный запрос (например, отсутствует id)"
+        '404':
+          description: "Задача не найдена"
+        '500':
+          description: "Ошибка сервера"
+        default:
+          description: "Ошибка"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomError'
+
+components:
+  headers:
+    Authorization:
+      description: JWT access token
+      schema:
+        type: string
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        title:
+          type: string
+          example: "Купить продукты"
+        description:
+          type: string
+          nullable: true
+          example: "Молоко, хлеб, яйца"
+        deadline:
+          type: string
+          format: date
+          example: "2025-01-01"
+        status:
+          type: string
+          example: "Выполнено"
+    
+    TaskList:
+      type: object
+      properties:
+        userId:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+    
+    CustomError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "invalid password"
+          
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          example: "my@email.com"
